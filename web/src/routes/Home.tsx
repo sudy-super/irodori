@@ -9,6 +9,12 @@ export default function Home() {
   return (
     <div className="home-page">
       <section className="home-page__intro rise">
+        <img
+          src="/chick.png"
+          alt=""
+          aria-hidden="true"
+          className="home-page__mascot"
+        />
         <Logo size="xl" withSubtitle />
       </section>
 

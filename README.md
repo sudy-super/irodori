@@ -69,6 +69,9 @@ DB_NAME=my-irodori BUCKET_NAME=my-irodori-images ./scripts/setup-cloudflare.sh
 #### 手動でやりたい場合 (自動セットアップを使わない場合)
 
 ~~~bash
+# テンプレートから自分用 wrangler.toml を作成 (.gitignore 済)
+cp worker/wrangler.example.toml worker/wrangler.toml
+
 cd worker
 
 # D1 データベースを作成
@@ -94,8 +97,9 @@ npm run deploy
 
 ### 3. (任意) 独自ドメインで配信したい
 
-`worker/wrangler.toml` 末尾の `routes = [...]` のコメントを外し、Cloudflare の
-同アカウントに登録済みドメインを指定してから再度 `npm run deploy`:
+`worker/wrangler.toml` (example からコピーされたあなたの実ファイル) 末尾の
+`routes = [...]` のコメントを外し、Cloudflare の同アカウントに登録済みのドメインを
+指定してから再度 `npm run deploy`:
 
 ~~~toml
 routes = [

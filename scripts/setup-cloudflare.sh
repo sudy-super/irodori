@@ -17,6 +17,17 @@ DB_NAME="${DB_NAME:-irodori}"
 BUCKET_NAME="${BUCKET_NAME:-irodori-images}"
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 WRANGLER_TOML="${ROOT_DIR}/worker/wrangler.toml"
+WRANGLER_TOML_EXAMPLE="${ROOT_DIR}/worker/wrangler.example.toml"
+
+# wrangler.toml が無ければ example からコピーして初期化
+if [ ! -f "${WRANGLER_TOML}" ]; then
+  if [ ! -f "${WRANGLER_TOML_EXAMPLE}" ]; then
+    echo "ERROR: ${WRANGLER_TOML_EXAMPLE} が見つかりません" >&2
+    exit 1
+  fi
+  echo "[0/4] worker/wrangler.toml が無いので example からコピーします"
+  cp "${WRANGLER_TOML_EXAMPLE}" "${WRANGLER_TOML}"
+fi
 
 cd "${ROOT_DIR}/worker"
 

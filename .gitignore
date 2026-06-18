@@ -11,3 +11,7 @@ dist
 # ローカル参考資料・作業メモ (公開不要)
 ref/
 tasks/
+
+# 各ユーザ固有の D1 ID / カスタムドメインを含むので追跡しない。
+# テンプレートは worker/wrangler.example.toml に置いている。
+worker/wrangler.toml

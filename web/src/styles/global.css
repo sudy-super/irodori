@@ -200,6 +200,19 @@ body {
   width: 100%;
 }
 
+/* キャラ画像 — intro セクション内でロゴの上にインライン配置 */
+.home-page__mascot {
+  width: clamp(60px, 9vw, 110px);
+  height: auto;
+  display: block;
+  user-select: none;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 480px) {
+  .home-page__mascot { width: 56px; }
+}
+
 .home-page__intro {
   display: flex;
   flex-direction: column;
