@@ -538,54 +538,78 @@ body {
   line-height: 0.95;
   /*
    * 中抜き白 + 二方向影:
-   *   - 8時方向 (左下) : 黒のハードシャドウ
-   *   - 10時方向 (左上) : 透明度高めのソフトな半透明影
+   *   - 8時方向 (左下) : 黒のハードシャドウ → ::before
+   *   - 10時方向 (左上) : 透明度高めのソフトな半透明影 → ::after
+   * 影は擬似要素で「stroke なしの fill コピー」として別レイヤに分離。
+   * これで Safari でも -webkit-text-stroke の輪郭が影に乗らない (Chrome と同じ見た目)。
    */
   color: var(--canvas);
   -webkit-text-stroke: 1.5px var(--ink);
-  text-shadow:
-    -6px 2px 0 var(--ink),
-    -4px -4px 0 rgba(17, 17, 17, 0.25);
+  position: relative;
+  isolation: isolate;
   user-select: none;
+  /* 影オフセット (サイズごとに上書き) */
+  --hard-x: -6px;
+  --hard-y: 2px;
+  --soft-x: -4px;
+  --soft-y: -4px;
+}
+
+.brand-mark::before,
+.brand-mark::after {
+  content: "irodori";
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  -webkit-text-stroke-width: 0;
+  -webkit-text-stroke-color: transparent;
+}
+
+.brand-mark::before {
+  color: var(--ink);
+  transform: translate(var(--hard-x), var(--hard-y));
+  z-index: -1;
+}
+
+.brand-mark::after {
+  color: rgba(17, 17, 17, 0.25);
+  transform: translate(var(--soft-x), var(--soft-y));
+  z-index: -2;
 }
 
 .brand-mark--xs {
   font-size: 1.45rem;
   -webkit-text-stroke-width: 1px;
-  text-shadow:
-    -3px 1px 0 var(--ink),
-    -2px -2px 0 rgba(17, 17, 17, 0.25);
+  --hard-x: -3px; --hard-y: 1px;
+  --soft-x: -2px; --soft-y: -2px;
 }
 .brand-mark--sm { font-size: 2rem; }
 .brand-mark--lg {
   font-size: 5rem;
   -webkit-text-stroke-width: 2px;
-  text-shadow:
-    -10px 3px 0 var(--ink),
-    -6px -6px 0 rgba(17, 17, 17, 0.25);
+  --hard-x: -10px; --hard-y: 3px;
+  --soft-x: -6px; --soft-y: -6px;
 }
 .brand-mark--xl {
   font-size: 7.5rem;
   -webkit-text-stroke-width: 2.5px;
-  text-shadow:
-    -14px 4px 0 var(--ink),
-    -9px -8px 0 rgba(17, 17, 17, 0.25);
+  --hard-x: -14px; --hard-y: 4px;
+  --soft-x: -9px; --soft-y: -8px;
 }
 
 @media (max-width: 720px) {
   .brand-mark--lg {
     font-size: 3.4rem;
     -webkit-text-stroke-width: 1.5px;
-    text-shadow:
-      -6px 2px 0 var(--ink),
-      -4px -3px 0 rgba(17, 17, 17, 0.25);
+    --hard-x: -6px; --hard-y: 2px;
+    --soft-x: -4px; --soft-y: -3px;
   }
   .brand-mark--xl {
     font-size: 4.4rem;
     -webkit-text-stroke-width: 2px;
-    text-shadow:
-      -8px 3px 0 var(--ink),
-      -6px -4px 0 rgba(17, 17, 17, 0.25);
+    --hard-x: -8px; --hard-y: 3px;
+    --soft-x: -6px; --soft-y: -4px;
   }
 }
 
@@ -593,9 +617,8 @@ body {
   .brand-mark--xl {
     font-size: 3.4rem;
     -webkit-text-stroke-width: 1.5px;
-    text-shadow:
-      -6px 2px 0 var(--ink),
-      -4px -3px 0 rgba(17, 17, 17, 0.25);
+    --hard-x: -6px; --hard-y: 2px;
+    --soft-x: -4px; --soft-y: -3px;
   }
 }
 
