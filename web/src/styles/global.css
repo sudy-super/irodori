@@ -228,6 +228,11 @@ body {
 
 .home-page__copy p {
   margin: 0;
+  /* 日本語の不自然な改行を避け、<wbr> と句読点でのみ折り返す */
+  word-break: keep-all;
+  line-break: strict;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
 }
 
 .home-page__cards {
