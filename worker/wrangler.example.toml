@@ -9,10 +9,18 @@ compatibility_date = "2025-09-01"
 # 2) [[d1_databases]] の `database_id` を自分のアカウントで作成した
 #    D1 のID に書き換える (`wrangler d1 create irodori` で発行された ID)
 # 3) [[r2_buckets]] の `bucket_name` は自分のアカウントで一意な名前に
-# 4) 独自ドメインで配信したい場合は最下部の `routes = [...]` のコメントを外し
+# 4) 独自ドメインで配信したい場合は下の `routes = [...]` のコメントを外し
 #    Cloudflare 上で Zone を保有するドメインに書き換える
 # 詳しいセットアップ手順は README の "デプロイ" 節を参照
 # ------------------------------------------------------------
+
+# 独自ドメインで配信する場合のみコメントを外して使用。
+# IMPORTANT: routes は必ず `[vars]` などのテーブル宣言より前に置くこと。
+# TOML 仕様上、`[vars]` 以降に書いた key は `vars.routes` として解釈され
+# Worker のルートとして登録されなくなる。
+# routes = [
+#   { pattern = "irodori.example.com", custom_domain = true }
+# ]
 
 # 静的アセット (web/dist) を同居させ、API・画像・SPA をすべて一つの Worker で配信。
 # - 静的ファイルがあれば優先的に返す
@@ -35,9 +43,3 @@ bucket_name = "irodori-images"
 [vars]
 MAX_IMAGE_BYTES = "2097152"
 PUBLIC_BASE = ""
-
-# 既定では *.workers.dev サブドメイン (Cloudflare が自動発行) で配信されます。
-# 独自ドメインを使う場合は以下を有効化し、Cloudflare に登録済みの Zone を指定してください。
-# routes = [
-#   { pattern = "irodori.example.com", custom_domain = true }
-# ]

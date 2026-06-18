@@ -97,7 +97,7 @@ npm run deploy
 
 ### 3. (任意) 独自ドメインで配信したい
 
-`worker/wrangler.toml` (example からコピーされたあなたの実ファイル) 末尾の
+`worker/wrangler.toml` (example からコピーされたあなたの実ファイル) で
 `routes = [...]` のコメントを外し、Cloudflare の同アカウントに登録済みのドメインを
 指定してから再度 `npm run deploy`:
 
@@ -107,7 +107,13 @@ routes = [
 ]
 ~~~
 
-`custom_domain = true` にしておけば DNS レコードと SSL 証明書を Cloudflare が自動でプロビジョンします。
+⚠️ **TOML の落とし穴**: `routes = [...]` は **必ず `[vars]` や `[assets]` などの
+テーブル宣言より前** (ファイル上部) に置いてください。`[vars]` の後ろに書くと
+TOML 仕様上 `vars.routes` として入れ子変数に解釈され、Worker のルート設定として
+登録されず独自ドメインからアクセスできなくなります。デプロイ出力で `routes` が
+`- Vars:` セクションの下にぶら下がっていたらこのパターンです。
+
+`custom_domain = true` にしておけば DNS レコードと SSL 証明書を Cloudflare が自動でプロビジョンします (Cloudflare 上でその Zone を管理している前提)。
 
 ### 4. (任意) サンプル絵をシード投稿する
 
