@@ -1,0 +1,21 @@
+{
+  "name": "irodori",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "web",
+    "worker"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace web run dev",
+    "dev:worker": "npm --workspace worker run dev",
+    "build:web": "npm --workspace web run build",
+    "build:worker": "npm --workspace worker run build",
+    "seed": "node scripts/seed.mjs",
+    "deploy": "npm run build:web && npm --workspace worker run deploy",
+    "db:apply:remote": "npm --workspace worker run db:apply:remote"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.5"
+  }
+}

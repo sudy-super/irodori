@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>irodori — 「いろ」でつながる色覚支援ツール</title>
+    <meta name="description" content="色覚異常を持つ人と正常色覚を持つ人をつなぐ色覚支援 Web サービス。" />
+
+    <!-- Google Fonts (フォールバック / Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Mochiy+Pop+P+One&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Zen+Kurenaido&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Adobe Fonts (AB-J-GU) — Web Font Loader 方式 (VITE_TYPEKIT_ID が設定されたときのみ動作) -->
+    <script>
+      (function (d) {
+        var kit = "%VITE_TYPEKIT_ID%";
+        if (!kit || kit.indexOf("VITE_TYPEKIT_ID") !== -1 || kit.length === 0) return;
+        var config = { kitId: kit, scriptTimeout: 3000, async: true };
+        var h = d.documentElement;
+        var t = setTimeout(function () {
+          h.className = h.className.replace(/\bwf-loading\b/g, "") + " wf-inactive";
+        }, config.scriptTimeout);
+        var tk = d.createElement("script");
+        var f = false;
+        var s = d.getElementsByTagName("script")[0];
+        h.className += " wf-loading";
+        tk.src = "https://use.typekit.net/" + config.kitId + ".js";
+        tk.async = true;
+        tk.onload = tk.onreadystatechange = function () {
+          var a = this.readyState;
+          if (f || (a && a !== "complete" && a !== "loaded")) return;
+          f = true;
+          clearTimeout(t);
+          try { Typekit.load(config); } catch (e) {}
+        };
+        s.parentNode.insertBefore(tk, s);
+      })(document);
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
