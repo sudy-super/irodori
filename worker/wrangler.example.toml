@@ -15,9 +15,6 @@ compatibility_date = "2025-09-01"
 # ------------------------------------------------------------
 
 # 独自ドメインで配信する場合のみコメントを外して使用。
-# IMPORTANT: routes は必ず `[vars]` などのテーブル宣言より前に置くこと。
-# TOML 仕様上、`[vars]` 以降に書いた key は `vars.routes` として解釈され
-# Worker のルートとして登録されなくなる。
 # routes = [
 #   { pattern = "irodori.example.com", custom_domain = true }
 # ]
