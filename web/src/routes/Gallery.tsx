@@ -109,11 +109,11 @@ export default function Gallery() {
           />
         </div>
         <button
-          className="btn"
+          className="btn btn--lg"
           onClick={openFilter}
           aria-label="フィルター"
           title="フィルター"
-          style={{ padding: 10, width: 48, height: 48 }}
+          style={{ padding: 18 }}
         >
           <FilterIcon />
         </button>
