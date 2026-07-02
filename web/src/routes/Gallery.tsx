@@ -56,8 +56,6 @@ export default function Gallery() {
     }
   }, [cursor, topic, visionParam])
 
-  useEffect(() => { fetchFirst() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   const openFilter = () => {
     setDraftSet(new Set(visionSet))
     setClosing(false)
