@@ -21,7 +21,9 @@ export default function Draw() {
   const [size, setSize] = useState(8)
   const [modalOpen, setModalOpen] = useState(false)
   const [sheet, setSheet] = useState<'color' | 'size' | null>(null)
-  const isMobile = useMediaQuery('(max-width: 760px)')
+  const isNarrow = useMediaQuery('(max-width: 760px)')
+  const isShort = useMediaQuery('(max-height: 560px)')
+  const isMobile = isNarrow || isShort
 
   useEffect(() => {
     setTopic(params.get('topic') ?? initialTopic)
