@@ -13,6 +13,8 @@ export default function Draw() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const canvasRef = useRef<DrawingCanvasHandle | null>(null)
+  const asideRef = useRef<HTMLElement | null>(null)
+  const colorRef = useRef<HTMLDivElement | null>(null)
 
   const initialTopic = params.get('topic') ?? randomTopic()
   const [topic, setTopic] = useState(initialTopic)
@@ -21,9 +23,33 @@ export default function Draw() {
   const [size, setSize] = useState(8)
   const [modalOpen, setModalOpen] = useState(false)
   const [sheet, setSheet] = useState<'color' | 'size' | null>(null)
-  const isNarrow = useMediaQuery('(max-width: 760px)')
-  const isShort = useMediaQuery('(max-height: 560px)')
-  const isMobile = isNarrow || isShort
+  const isMobile = useMediaQuery('(max-width: 760px)')
+
+  // PC 版: aside コンテナ高さと色セクション実測高さの差から余りを算出
+  const [asideH, setAsideH] = useState(9999)
+  const [colorH, setColorH] = useState(0)
+  useEffect(() => {
+    if (isMobile) { setAsideH(9999); return }
+    const els = [asideRef.current, colorRef.current].filter(Boolean) as HTMLElement[]
+    if (els.length < 2) return
+    const measure = () => {
+      setAsideH(els[0].clientHeight)
+      setColorH(els[1].getBoundingClientRect().height)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    els.forEach((el) => ro.observe(el))
+    return () => ro.disconnect()
+  }, [isMobile])
+  // aside 内の全セクションが収まるようにカラーホイールを動的に縮小
+  // ツール: divider(1) + gap(20) + label(22) + buttons(52) + gap(20) ≈ 115
+  // 太さ: label(22) + slider(22) + gap(20) ≈ 64
+  // swatch行: 30, label「色」: 20, padding: 44, gaps(3セクション): 60 → 固定計 = 333
+  const FIXED_H = 333
+  const wheelSize = isMobile ? 240 : Math.min(220, Math.max(100, asideH - FIXED_H))
+  // まだ入りきらない場合にツールバーへ溢す (wheel 最小 100 + 固定 333 = 433)
+  const overflowSize = !isMobile && asideH < wheelSize + FIXED_H - 64 + 20
+  const overflowTool = !isMobile && asideH < wheelSize + FIXED_H - 64 - 115 + 20
 
   useEffect(() => {
     setTopic(params.get('topic') ?? initialTopic)
@@ -216,10 +242,10 @@ export default function Draw() {
       </header>
 
       <section className="rise draw-page__main">
-        <aside className="card stack-md">
-          <div className="stack-sm" style={{ alignItems: 'center' }}>
+        <aside ref={asideRef} className="card stack-md">
+          <div ref={colorRef} className="stack-sm" style={{ alignItems: 'center' }}>
             <span className="field-label" style={{ alignSelf: 'flex-start' }}>色</span>
-            <ColorWheel value={color} onChange={setColor} size={220} />
+            <ColorWheel value={color} onChange={setColor} size={wheelSize} />
             <div
               className="row-center"
               style={{ gap: 8, alignSelf: 'flex-start', marginTop: 4 }}
@@ -240,42 +266,47 @@ export default function Draw() {
             </div>
           </div>
 
-          <div className="divider" />
+          {!overflowTool && (
+            <>
+              <div className="divider" />
+              <div className="stack-sm">
+                <span className="field-label">ツール</span>
+                <div className="row" style={{ gap: 8 }}>
+                  <button
+                    className={`btn ${tool === 'pen' ? 'btn--primary' : ''}`}
+                    onClick={() => setTool('pen')}
+                    aria-label="えんぴつ"
+                    title="えんぴつ"
+                    style={{ flex: 1, padding: 12 }}
+                  >
+                    <PencilIcon />
+                  </button>
+                  <button
+                    className={`btn ${tool === 'eraser' ? 'btn--primary' : ''}`}
+                    onClick={() => setTool('eraser')}
+                    aria-label="けしごむ"
+                    title="けしごむ"
+                    style={{ flex: 1, padding: 12 }}
+                  >
+                    <EraserIcon />
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
-          <div className="stack-sm">
-            <span className="field-label">ツール</span>
-            <div className="row" style={{ gap: 8 }}>
-              <button
-                className={`btn ${tool === 'pen' ? 'btn--primary' : ''}`}
-                onClick={() => setTool('pen')}
-                aria-label="えんぴつ"
-                title="えんぴつ"
-                style={{ flex: 1, padding: 12 }}
-              >
-                <PencilIcon />
-              </button>
-              <button
-                className={`btn ${tool === 'eraser' ? 'btn--primary' : ''}`}
-                onClick={() => setTool('eraser')}
-                aria-label="けしごむ"
-                title="けしごむ"
-                style={{ flex: 1, padding: 12 }}
-              >
-                <EraserIcon />
-              </button>
+          {!overflowSize && (
+            <div className="stack-sm">
+              <span className="field-label">太さ ({size}px)</span>
+              <input
+                type="range"
+                min={2}
+                max={32}
+                value={size}
+                onChange={(e) => setSize(Number(e.target.value))}
+              />
             </div>
-          </div>
-
-          <div className="stack-sm">
-            <span className="field-label">太さ ({size}px)</span>
-            <input
-              type="range"
-              min={2}
-              max={32}
-              value={size}
-              onChange={(e) => setSize(Number(e.target.value))}
-            />
-          </div>
+          )}
         </aside>
 
         <div className="draw-page__canvas">
@@ -284,7 +315,41 @@ export default function Draw() {
       </section>
 
       <section className="rise draw-page__actions">
-        <div className="row" style={{ gap: 10 }}>
+        <div className="row" style={{ gap: 10, alignItems: 'center' }}>
+          {overflowTool && (
+            <>
+              <button
+                className="icon-btn"
+                data-active={tool === 'pen'}
+                onClick={() => setTool('pen')}
+                aria-label="えんぴつ"
+                title="えんぴつ"
+                style={{ width: 44, height: 44, borderRadius: '50%', border: '1.5px solid var(--ink)', background: tool === 'pen' ? 'var(--ink)' : 'var(--canvas)', color: tool === 'pen' ? 'var(--canvas)' : 'var(--ink)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}
+              >
+                <PencilIcon />
+              </button>
+              <button
+                className="icon-btn"
+                data-active={tool === 'eraser'}
+                onClick={() => setTool('eraser')}
+                aria-label="けしごむ"
+                title="けしごむ"
+                style={{ width: 44, height: 44, borderRadius: '50%', border: '1.5px solid var(--ink)', background: tool === 'eraser' ? 'var(--ink)' : 'var(--canvas)', color: tool === 'eraser' ? 'var(--canvas)' : 'var(--ink)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}
+              >
+                <EraserIcon />
+              </button>
+            </>
+          )}
+          {overflowSize && (
+            <button
+              className="draw-mobile__size-puck"
+              onClick={() => setSheet('size')}
+              aria-label="太さを変える"
+              title={`太さ ${size}px`}
+            >
+              <span className="draw-mobile__size-puck-num">{size}</span>
+            </button>
+          )}
           <button
             className="btn"
             onClick={handleReset}
@@ -328,6 +393,24 @@ export default function Draw() {
             }
           }}
         />
+      )}
+
+      {/* PC 版で太さが溢れた時のボトムシート */}
+      {sheet === 'size' && overflowSize && (
+        <>
+          <div className="bottom-sheet__overlay" onClick={() => setSheet(null)} aria-hidden="true" />
+          <aside className="bottom-sheet bottom-sheet--dialog" role="dialog" aria-modal="true" aria-label="太さ">
+            <div className="bottom-sheet__size-preview">
+              <span className="bottom-sheet__size-preview-dot" style={{ width: size, height: size, background: color }} />
+            </div>
+            <input type="range" min={2} max={32} value={size} onChange={(e) => setSize(Number(e.target.value))} aria-label="太さ" />
+            <div className="row-between">
+              <span className="muted" style={{ fontSize: '0.85rem' }}>細い</span>
+              <span style={{ fontWeight: 700 }}>{size}px</span>
+              <span className="muted" style={{ fontSize: '0.85rem' }}>太い</span>
+            </div>
+          </aside>
+        </>
       )}
     </div>
   )
