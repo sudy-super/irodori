@@ -131,18 +131,25 @@ app.get('/api/posts', async (c) => {
     conds.push('topic_norm LIKE ?')
     binds.push(`%${normalizeText(topic)}%`)
   }
-  // vision フィルタ: dominant axis で絞り込み (normal = 全軸 < 0.05)
-  const THRESHOLD = 0.05
-  if (vision === 'normal') {
-    conds.push(`artist_protan < ${THRESHOLD} AND artist_deutan < ${THRESHOLD} AND artist_tritan < ${THRESHOLD} AND artist_macular < ${THRESHOLD}`)
-  } else if (vision === 'protan') {
-    conds.push(`artist_protan >= ${THRESHOLD} AND artist_protan >= artist_deutan AND artist_protan >= artist_tritan AND artist_protan >= artist_macular`)
-  } else if (vision === 'deutan') {
-    conds.push(`artist_deutan >= ${THRESHOLD} AND artist_deutan >= artist_protan AND artist_deutan >= artist_tritan AND artist_deutan >= artist_macular`)
-  } else if (vision === 'tritan') {
-    conds.push(`artist_tritan >= ${THRESHOLD} AND artist_tritan >= artist_protan AND artist_tritan >= artist_deutan AND artist_tritan >= artist_macular`)
-  } else if (vision === 'macular') {
-    conds.push(`artist_macular >= ${THRESHOLD} AND artist_macular >= artist_protan AND artist_macular >= artist_deutan AND artist_macular >= artist_tritan`)
+  // vision フィルタ: カンマ区切りで複数指定可 (e.g. vision=protan,deutan)
+  if (vision) {
+    const types = vision.split(',').map((s) => s.trim()).filter(Boolean)
+    const THRESHOLD = 0.05
+    const visionClauses: string[] = []
+    for (const t of types) {
+      if (t === 'normal') {
+        visionClauses.push(`(artist_protan < ${THRESHOLD} AND artist_deutan < ${THRESHOLD} AND artist_tritan < ${THRESHOLD} AND artist_macular < ${THRESHOLD})`)
+      } else if (t === 'protan') {
+        visionClauses.push(`(artist_protan >= ${THRESHOLD} AND artist_protan >= artist_deutan AND artist_protan >= artist_tritan AND artist_protan >= artist_macular)`)
+      } else if (t === 'deutan') {
+        visionClauses.push(`(artist_deutan >= ${THRESHOLD} AND artist_deutan >= artist_protan AND artist_deutan >= artist_tritan AND artist_deutan >= artist_macular)`)
+      } else if (t === 'tritan') {
+        visionClauses.push(`(artist_tritan >= ${THRESHOLD} AND artist_tritan >= artist_protan AND artist_tritan >= artist_deutan AND artist_tritan >= artist_macular)`)
+      } else if (t === 'macular') {
+        visionClauses.push(`(artist_macular >= ${THRESHOLD} AND artist_macular >= artist_protan AND artist_macular >= artist_deutan AND artist_macular >= artist_tritan)`)
+      }
+    }
+    if (visionClauses.length) conds.push(`(${visionClauses.join(' OR ')})`)
   }
   if (cursor) {
     const n = Number(cursor)

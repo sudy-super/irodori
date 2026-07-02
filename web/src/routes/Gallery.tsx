@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { PostMeta, listPosts } from '../lib/api'
+import { useMediaQuery } from '../lib/useMediaQuery'
 import { describeProfile } from '../lib/visionTypes'
 
-const VISION_OPTIONS = [
-  { value: '', label: 'すべて' },
+const VISION_TYPES = [
   { value: 'normal', label: '正常色覚' },
   { value: 'protan', label: '1型 (赤)' },
   { value: 'deutan', label: '2型 (緑)' },
@@ -15,19 +15,24 @@ const VISION_OPTIONS = [
 
 export default function Gallery() {
   const [topic, setTopic] = useState('')
-  const [vision, setVision] = useState('')
-  const [draftVision, setDraftVision] = useState('')
+  const [visionSet, setVisionSet] = useState<Set<string>>(new Set())
+  const [draftSet, setDraftSet] = useState<Set<string>>(new Set())
   const [filterOpen, setFilterOpen] = useState(false)
+  const [closing, setClosing] = useState(false)
+  const isWide = useMediaQuery('(min-width: 761px)')
   const [posts, setPosts] = useState<PostMeta[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const closingTimer = useRef<ReturnType<typeof setTimeout>>()
+
+  const visionParam = visionSet.size ? [...visionSet].join(',') : undefined
 
   const fetchFirst = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const r = await listPosts({ topic: topic || undefined, vision: vision || undefined })
+      const r = await listPosts({ topic: topic || undefined, vision: visionParam })
       setPosts(r.posts)
       setCursor(r.cursor)
     } catch (e) {
@@ -35,13 +40,13 @@ export default function Gallery() {
     } finally {
       setLoading(false)
     }
-  }, [topic, vision])
+  }, [topic, visionParam])
 
   const fetchMore = useCallback(async () => {
     if (!cursor) return
     setLoading(true)
     try {
-      const r = await listPosts({ topic: topic || undefined, vision: vision || undefined, cursor })
+      const r = await listPosts({ topic: topic || undefined, vision: visionParam, cursor })
       setPosts((prev) => [...prev, ...r.posts])
       setCursor(r.cursor)
     } catch (e) {
@@ -49,27 +54,40 @@ export default function Gallery() {
     } finally {
       setLoading(false)
     }
-  }, [cursor, topic, vision])
+  }, [cursor, topic, visionParam])
 
-  useEffect(() => {
-    fetchFirst()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  useEffect(() => { fetchFirst() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const openFilter = () => {
-    setDraftVision(vision)
+    setDraftSet(new Set(visionSet))
+    setClosing(false)
     setFilterOpen(true)
   }
 
-  const applyFilter = () => {
-    setVision(draftVision)
-    setFilterOpen(false)
+  const closeFilter = () => {
+    setClosing(true)
+    clearTimeout(closingTimer.current)
+    closingTimer.current = setTimeout(() => {
+      setFilterOpen(false)
+      setClosing(false)
+    }, 200)
   }
 
-  // vision 変更後に自動検索
-  useEffect(() => {
-    fetchFirst()
-  }, [vision, fetchFirst])
+  const applyFilter = () => {
+    setVisionSet(new Set(draftSet))
+    closeFilter()
+  }
+
+  const toggleDraft = (v: string) => {
+    setDraftSet((prev) => {
+      const next = new Set(prev)
+      if (next.has(v)) next.delete(v)
+      else next.add(v)
+      return next
+    })
+  }
+
+  useEffect(() => { fetchFirst() }, [visionParam, fetchFirst])
 
   return (
     <div className="stack-lg">
@@ -108,32 +126,40 @@ export default function Gallery() {
 
       {filterOpen && createPortal(
         <>
-          <div className="bottom-sheet__overlay" onClick={() => setFilterOpen(false)} aria-hidden="true" />
-          <aside className="bottom-sheet" role="dialog" aria-modal="true" aria-label="フィルター">
+          <div
+            className={`bottom-sheet__overlay${closing ? ' bottom-sheet__overlay--closing' : ''}`}
+            onClick={closeFilter}
+            aria-hidden="true"
+          />
+          <aside
+            className={`bottom-sheet${isWide ? ' bottom-sheet--dialog' : ''}${closing ? ' bottom-sheet--closing' : ''}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label="フィルター"
+          >
             <div className="bottom-sheet__handle" />
             <div className="row-between" style={{ paddingBottom: 8, borderBottom: '1.5px solid var(--rule-soft)' }}>
               <strong style={{ fontSize: '1.05rem', letterSpacing: '0.08em' }}>フィルター</strong>
               <button
                 className="btn btn--ghost"
                 style={{ padding: '4px 10px', fontSize: '0.85rem' }}
-                onClick={() => setDraftVision('')}
+                onClick={() => setDraftSet(new Set())}
               >
                 リセット
               </button>
             </div>
             <div className="stack-xs" style={{ padding: '4px 0' }}>
               <span className="field-label" style={{ marginBottom: 4 }}>色覚タイプ</span>
-              {VISION_OPTIONS.map((o) => (
+              {VISION_TYPES.map((o) => (
                 <label
                   key={o.value}
                   className="check-list__item"
                   style={{ padding: '12px 14px', cursor: 'pointer' }}
                 >
                   <input
-                    type="radio"
-                    name="vision-filter"
-                    checked={draftVision === o.value}
-                    onChange={() => setDraftVision(o.value)}
+                    type="checkbox"
+                    checked={draftSet.has(o.value)}
+                    onChange={() => toggleDraft(o.value)}
                   />
                   <span className="check-list__mark" />
                   <span className="check-list__label">{o.label}</span>
