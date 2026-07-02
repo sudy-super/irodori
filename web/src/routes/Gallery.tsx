@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { PostMeta, listPosts } from '../lib/api'
 import { describeProfile } from '../lib/visionTypes'
@@ -21,8 +22,6 @@ export default function Gallery() {
   const [cursor, setCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const activeFilterLabel = VISION_OPTIONS.find((o) => o.value === vision)?.label ?? 'すべて'
 
   const fetchFirst = useCallback(async () => {
     setLoading(true)
@@ -96,17 +95,18 @@ export default function Gallery() {
         <button
           className="btn"
           onClick={openFilter}
-          style={{ padding: '10px 16px', fontSize: '0.9rem', gap: 6 }}
+          aria-label="フィルター"
+          title="フィルター"
+          style={{ padding: 10, width: 48, height: 48 }}
         >
           <FilterIcon />
-          {vision ? activeFilterLabel : 'フィルター'}
         </button>
         <button className="btn btn--primary btn--lg" onClick={fetchFirst} disabled={loading}>
           {loading ? '検索中…' : '検索する'}
         </button>
       </section>
 
-      {filterOpen && (
+      {filterOpen && createPortal(
         <>
           <div className="bottom-sheet__overlay" onClick={() => setFilterOpen(false)} aria-hidden="true" />
           <aside className="bottom-sheet" role="dialog" aria-modal="true" aria-label="フィルター">
@@ -148,7 +148,8 @@ export default function Gallery() {
               適用
             </button>
           </aside>
-        </>
+        </>,
+        document.body,
       )}
 
       {error && (
