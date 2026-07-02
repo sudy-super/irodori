@@ -46,10 +46,12 @@ export async function createPost(args: {
 
 export async function listPosts(opts: {
   topic?: string
+  vision?: string
   cursor?: string
 }): Promise<ListResponse> {
   const params = new URLSearchParams()
   if (opts.topic) params.set('topic', opts.topic)
+  if (opts.vision) params.set('vision', opts.vision)
   if (opts.cursor) params.set('cursor', opts.cursor)
   const res = await fetch(`${API_BASE}/api/posts?${params.toString()}`)
   if (!res.ok) throw new Error(`取得失敗: ${res.status}`)

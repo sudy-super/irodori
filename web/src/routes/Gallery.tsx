@@ -3,8 +3,18 @@ import { Link } from 'react-router-dom'
 import { PostMeta, listPosts } from '../lib/api'
 import { describeProfile } from '../lib/visionTypes'
 
+const VISION_OPTIONS = [
+  { value: '', label: 'すべて' },
+  { value: 'normal', label: '正常色覚' },
+  { value: 'protan', label: '1型' },
+  { value: 'deutan', label: '2型' },
+  { value: 'tritan', label: '3型' },
+  { value: 'macular', label: '黄変' },
+] as const
+
 export default function Gallery() {
   const [topic, setTopic] = useState('')
+  const [vision, setVision] = useState('')
   const [posts, setPosts] = useState<PostMeta[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -14,7 +24,7 @@ export default function Gallery() {
     setLoading(true)
     setError(null)
     try {
-      const r = await listPosts({ topic: topic || undefined })
+      const r = await listPosts({ topic: topic || undefined, vision: vision || undefined })
       setPosts(r.posts)
       setCursor(r.cursor)
     } catch (e) {
@@ -22,13 +32,13 @@ export default function Gallery() {
     } finally {
       setLoading(false)
     }
-  }, [topic])
+  }, [topic, vision])
 
   const fetchMore = useCallback(async () => {
     if (!cursor) return
     setLoading(true)
     try {
-      const r = await listPosts({ topic: topic || undefined, cursor })
+      const r = await listPosts({ topic: topic || undefined, vision: vision || undefined, cursor })
       setPosts((prev) => [...prev, ...r.posts])
       setCursor(r.cursor)
     } catch (e) {
@@ -36,7 +46,7 @@ export default function Gallery() {
     } finally {
       setLoading(false)
     }
-  }, [cursor, topic])
+  }, [cursor, topic, vision])
 
   useEffect(() => {
     fetchFirst()
@@ -54,7 +64,7 @@ export default function Gallery() {
           flexWrap: 'wrap',
         }}
       >
-        <div className="stack-xs" style={{ flex: 1, minWidth: 220 }}>
+        <div className="stack-xs" style={{ flex: 1, minWidth: 180 }}>
           <span className="field-label">お題で検索</span>
           <input
             type="search"
@@ -63,6 +73,21 @@ export default function Gallery() {
             placeholder="トマト"
             onKeyDown={(e) => e.key === 'Enter' && fetchFirst()}
           />
+        </div>
+        <div className="stack-xs">
+          <span className="field-label">色覚タイプ</span>
+          <div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
+            {VISION_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                className={`btn${vision === o.value ? ' btn--primary' : ''}`}
+                style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                onClick={() => setVision(o.value)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
         </div>
         <button className="btn btn--primary btn--lg" onClick={fetchFirst} disabled={loading}>
           {loading ? '検索中…' : '検索する'}

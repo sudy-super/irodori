@@ -118,9 +118,10 @@ app.post('/api/posts', async (c) => {
   )
 })
 
-/** GET /api/posts?topic=&cursor= */
+/** GET /api/posts?topic=&vision=&cursor= */
 app.get('/api/posts', async (c) => {
   const topic = c.req.query('topic')
+  const vision = c.req.query('vision')
   const cursor = c.req.query('cursor')
   const limit = 24
 
@@ -129,6 +130,19 @@ app.get('/api/posts', async (c) => {
   if (topic) {
     conds.push('topic_norm LIKE ?')
     binds.push(`%${normalizeText(topic)}%`)
+  }
+  // vision フィルタ: dominant axis で絞り込み (normal = 全軸 < 0.05)
+  const THRESHOLD = 0.05
+  if (vision === 'normal') {
+    conds.push(`artist_protan < ${THRESHOLD} AND artist_deutan < ${THRESHOLD} AND artist_tritan < ${THRESHOLD} AND artist_macular < ${THRESHOLD}`)
+  } else if (vision === 'protan') {
+    conds.push(`artist_protan >= ${THRESHOLD} AND artist_protan >= artist_deutan AND artist_protan >= artist_tritan AND artist_protan >= artist_macular`)
+  } else if (vision === 'deutan') {
+    conds.push(`artist_deutan >= ${THRESHOLD} AND artist_deutan >= artist_protan AND artist_deutan >= artist_tritan AND artist_deutan >= artist_macular`)
+  } else if (vision === 'tritan') {
+    conds.push(`artist_tritan >= ${THRESHOLD} AND artist_tritan >= artist_protan AND artist_tritan >= artist_deutan AND artist_tritan >= artist_macular`)
+  } else if (vision === 'macular') {
+    conds.push(`artist_macular >= ${THRESHOLD} AND artist_macular >= artist_protan AND artist_macular >= artist_deutan AND artist_macular >= artist_tritan`)
   }
   if (cursor) {
     const n = Number(cursor)
