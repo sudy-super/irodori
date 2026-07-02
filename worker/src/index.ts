@@ -203,6 +203,7 @@ app.get('/images/:scope/:filename', async (c) => {
 /**
  * 未マッチ経路: /api/* と /images/* は素直に JSON 404、
  * それ以外は SPA フォールバックとして index.html を ASSETS から返す。
+ * /post/:id の場合は OGP meta を注入して返す。
  */
 app.notFound(async (c) => {
   const url = new URL(c.req.url)
@@ -211,9 +212,32 @@ app.notFound(async (c) => {
   }
   const indexUrl = new URL('/index.html', url.origin)
   const res = await c.env.ASSETS.fetch(new Request(indexUrl.toString(), { method: 'GET' }))
-  return new Response(res.body, {
+  let html = await res.text()
+
+  const postMatch = url.pathname.match(/^\/post\/([^/]+)$/)
+  if (postMatch) {
+    const row = await c.env.DB.prepare(
+      `SELECT id, topic, image_key, width, height FROM posts WHERE id = ?`,
+    ).bind(postMatch[1]).first<{ id: string; topic: string; image_key: string; width: number; height: number }>()
+    if (row) {
+      const imageUrl = `${url.origin}/images/${row.image_key}`
+      const ogTags = [
+        `<meta property="og:title" content="${escapeAttr(row.topic)} — irodori" />`,
+        `<meta property="og:image" content="${escapeAttr(imageUrl)}" />`,
+        `<meta property="og:image:type" content="image/png" />`,
+        `<meta property="og:image:width" content="${row.width}" />`,
+        `<meta property="og:image:height" content="${row.height}" />`,
+        `<meta property="og:type" content="article" />`,
+        `<meta property="og:url" content="${escapeAttr(url.href)}" />`,
+        `<meta name="twitter:card" content="summary_large_image" />`,
+      ].join('\n    ')
+      html = html.replace('</head>', `    ${ogTags}\n  </head>`)
+    }
+  }
+
+  return new Response(html, {
     status: 200,
-    headers: res.headers,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
   })
 })
 
@@ -298,4 +322,7 @@ function sanitizeComment(v: unknown): string | null {
 }
 function normalizeText(v: string): string {
   return v.normalize('NFKC').toLowerCase()
+}
+function escapeAttr(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
