@@ -41,15 +41,12 @@ export default function Draw() {
     els.forEach((el) => ro.observe(el))
     return () => ro.disconnect()
   }, [isMobile])
-  // aside 内の全セクションが収まるようにカラーホイールを動的に縮小
-  // ツール: divider(1) + gap(20) + label(22) + buttons(52) + gap(20) ≈ 115
-  // 太さ: label(22) + slider(22) + gap(20) ≈ 64
-  // swatch行: 30, label「色」: 20, padding: 44, gaps(3セクション): 60 → 固定計 = 333
-  const FIXED_H = 333
-  const wheelSize = isMobile ? 240 : Math.min(220, Math.max(100, asideH - FIXED_H))
-  // まだ入りきらない場合にツールバーへ溢す (wheel 最小 100 + 固定 333 = 433)
-  const overflowSize = !isMobile && asideH < wheelSize + FIXED_H - 64 + 20
-  const overflowTool = !isMobile && asideH < wheelSize + FIXED_H - 64 - 115 + 20
+  // カラーホイール固定 220px。色セクションが 3 割以上隠れたら完全モバイル UI に切替
+  const colorClipped = !isMobile && asideH < 9999 && colorH > 0 && asideH < colorH * 0.7
+  // ツール・太さはコンテナ余裕で段階的にツールバーへ移動
+  const spare = asideH - colorH - 44 // 44 = aside padding
+  const overflowSize = !isMobile && !colorClipped && spare < 179 // 115(tool) + 64(size)
+  const overflowTool = !isMobile && !colorClipped && spare < 115
 
   useEffect(() => {
     setTopic(params.get('topic') ?? initialTopic)
@@ -85,7 +82,7 @@ export default function Draw() {
     [navigate, topic],
   )
 
-  if (isMobile) {
+  if (isMobile || colorClipped) {
     return (
       <div className="draw-mobile">
         <div className="draw-mobile__topic">
@@ -245,7 +242,7 @@ export default function Draw() {
         <aside ref={asideRef} className="card stack-md">
           <div ref={colorRef} className="stack-sm" style={{ alignItems: 'center' }}>
             <span className="field-label" style={{ alignSelf: 'flex-start' }}>色</span>
-            <ColorWheel value={color} onChange={setColor} size={wheelSize} />
+            <ColorWheel value={color} onChange={setColor} size={220} />
             <div
               className="row-center"
               style={{ gap: 8, alignSelf: 'flex-start', marginTop: 4 }}
